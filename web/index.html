@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题本 - 智能学习助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0A0A0F;
+            --bg-secondary: #1A1A24;
+            --bg-tertiary: #252532;
+            --accent: #00FF9D;
+            --accent-dim: rgba(0, 255, 157, 0.1);
+            --text-primary: #E8E8EC;
+            --text-secondary: #8B8BA3;
+            --danger: #FF6B6B;
+            --warning: #FFB347;
+            --success: #00FF9D;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: var(--bg-secondary);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+        
+        .header h1 {
+            color: var(--accent);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 主要内容区 */
+        .main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        
+        /* 统计卡片 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-num {
+            color: var(--accent);
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        /* 功能区域 */
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 157, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* 错题卡片 */
+        .question-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .question-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .tag-math { background: #FF6B35; color: var(--bg-primary); }
+        .tag-english { background: #4ECDC4; color: var(--bg-primary); }
+        .tag-chinese { background: #FFB347; color: var(--bg-primary); }
+        .tag-physics { background: #A66DD4; color: white; }
+        .tag-chemistry { background: #6BCB77; color: var(--bg-primary); }
+        
+        .tag-topic {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        
+        .question-content {
+            color: var(--text-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .question-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .question-image.has-image {
+            display: block;
+        }
+        
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .question-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* 底部导航 */
+        .dock {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid var(--bg-tertiary);
+        }
+        
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .dock-item.active {
+            color: var(--accent);
+        }
+        
+        .dock-icon {
+            font-size: 24px;
+        }
+        
+        .dock-label {
+            font-size: 12px;
+        }
+        
+        /* 浮动按钮 */
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: var(--bg-primary);
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 255, 157, 0.4);
+            transition: transform 0.2s;
+            z-index: 99;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        /* 表单 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* 图片上传 */
+        .image-upload {
+            border: 2px dashed var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .image-upload:hover {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+        
+        .image-upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .image-preview.has-image {
+            display: block;
+        }
+        
+        /* 组卷功能 */
+        .paper-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .paper-option {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .paper-option:hover {
+            border-color: var(--accent);
+        }
+        
+        .paper-option.selected {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        
+        .paper-option-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .paper-option-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 空状态 */
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        /* 筛选 */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-chip {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-chip.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        /* 学习进度 */
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .paper-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <h1>📚 错题本</h1>
+    </header>
+    
+    <!-- 主要内容 -->
+    <main class="main">
+        <!-- 统计卡片 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-num" id="totalCount">0</div>
+                <div class="stat-label">总错题数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="reviewCount">0</div>
+                <div class="stat-label">待复习</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="masteredCount">0</div>
+                <div class="stat-label">已掌握</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 筛选 -->
+        <div class="filter-bar">
+            <div class="filter-chip active" data-filter="all">全部</div>
+            <div class="filter-chip" data-filter="数学">数学</div>
+            <div class="filter-chip" data-filter="英语">英语</div>
+            <div class="filter-chip" data-filter="语文">语文</div>
+            <div class="filter-chip" data-filter="物理">物理</div>
+            <div class="filter-chip" data-filter="化学">化学</div>
+        </div>
+        
+        <!-- 错题列表 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-title">📝 错题列表</span>
+            </div>
+            <div class="question-list" id="questionList">
+                <div class="empty">
+                    <div class="empty-icon">📭</div>
+                    <p>还没有错题记录</p>
+                    <p>点击下方 + 按钮添加第一道错题</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 浮动添加按钮 -->
+    <div class="fab" onclick="openModal('addModal')">+</div>
+    
+    <!-- 底部导航 -->
+    <nav class="dock">
+        <div class="dock-item" onclick="switchTab('camera')">
+            <span class="dock-icon">📷</span>
+            <span class="dock-label">拍照</span>
+        </div>
+        <div class="dock-item active" onclick="switchTab('questions')">
+            <span class="dock-icon">📁</span>
+            <span class="dock-label">题库</span>
+        </div>
+        <div class="dock-item" onclick="switchTab('paper')">
+            <span class="dock-icon">📝</span>
+            <span class="dock-label">组卷</span>
+        </div>
+        <div class="dock-item" onclick="switchTab('stats')">
+            <span class="dock-icon">📊</span>
+            <span class="dock-label">统计</span>
+        </div>
+    </nav>
+    
+    <!-- 添加错题模态框 -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">➕ 添加错题</span>
+                <span class="modal-close" onclick="closeModal('addModal')">&times;</span>
+            </div>
+            <form id="addForm" onsubmit="addQuestion(event)">
+                <div class="form-group">
+                    <label class="form-label">科目</label>
+                    <select class="form-select" id="subject" required>
+                        <option value="">请选择科目</option>
+                        <option value="数学">数学</option>
+                        <option value="英语">英语</option>
+                        <option value="语文">语文</option>
+                        <option value="物理">物理</option>
+                        <option value="化学">化学</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">知识点</label>
+                    <input class="form-input" id="topic" placeholder="如：三角函数、完形填空" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">错题内容</label>
+                    <textarea class="form-textarea" id="content" placeholder="请输入错题内容..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">错误原因</label>
+                    <input class="form-input" id="wrongReason" placeholder="如：公式记混、审题不清">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">正确答案</label>
+                    <textarea class="form-textarea" id="correctAnswer" placeholder="请输入正确答案"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">拍照上传（可选）</label>
+                    <div class="image-upload" onclick="document.getElementById('imageInput').click()">
+                        <div class="image-upload-icon">📷</div>
+                        <p>点击上传图片</p>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="previewImage(event)">
+                    <img id="imagePreview" class="image-preview">
+                </div>
+                <button type="submit" class="btn" style="width: 100%">保存错题</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 组卷模态框 -->
+    <div class="modal" id="paperModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">📝 智能组卷</span>
+                <span class="modal-close" onclick="closeModal('paperModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">选择科目</label>
+                <select class="form-select" id="paperSubject">
+                    <option value="all">全部科目</option>
+                    <option value="数学">数学</option>
+                    <option value="英语">英语</option>
+                    <option value="语文">语文</option>
+                    <option value="物理">物理</option>
+                    <option value="化学">化学</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">题目数量</label>
+                <select class="form-select" id="paperCount">
+                    <option value="5">5道题</option>
+                    <option value="10" selected>10道题</option>
+                    <option value="15">15道题</option>
+                    <option value="20">20道题</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">难度选择</label>
+                <div class="paper-options">
+                    <div class="paper-option selected" data-difficulty="all" onclick="selectDifficulty(this)">
+                        <div class="paper-option-title">随机混合</div>
+                        <div class="paper-option-desc">所有难度的题目</div>
+                    </div>
+                    <div class="paper-option" data-difficulty="easy" onclick="selectDifficulty(this)">
+                        <div class="paper-option-title">基础巩固</div>
+                        <div class="paper-option-desc">简单题目为主</div>
+                    </div>
+                    <div class="paper-option" data-difficulty="medium" onclick="selectDifficulty(this)">
+                        <div class="paper-option-title">能力提升</div>
+                        <div class="paper-option-desc">中等难度题目</div>
+                    </div>
+                    <div class="paper-option" data-difficulty="hard" onclick="selectDifficulty(this)">
+                        <div class="paper-option-title">挑战极限</div>
+                        <div class="paper-option-desc">困难题目为主</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" style="width: 100%" onclick="generatePaper()">生成试卷</button>
+            
+            <div id="paperResult" style="margin-top: 20px; display: none;">
+                <div class="section-title" style="margin-bottom: 15px">生成的试卷</div>
+                <div id="paperContent"></div>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 15px" onclick="printPaper()">🖨️ 打印/导出</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 数据存储
+        let questions = JSON.parse(localStorage.getItem('cuoti_questions') || '[]');
+        let currentFilter = 'all';
+        let currentImage = '';
+        let selectedDifficulty = 'all';
+        
+        // 初始化
+        function init() {
+            renderQuestions();
+            updateStats();
+        }
+        
+        // 渲染错题列表
+        function renderQuestions() {
+            const list = document.getElementById('questionList');
+            let filtered = questions;
+            
+            if (currentFilter !== 'all') {
+                filtered = questions.filter(q => q.subject === currentFilter);
+            }
+            
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">📭</div>
+                        <p>还没有错题记录</p>
+                        <p>点击下方 + 按钮添加第一道错题</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = filtered.map((q, index) => `
+                <div class="question-card">
+                    <div class="question-header">
+                        <div class="tags">
+                            <span class="tag tag-${q.subject}">${q.subject}</span>
+                            <span class="tag tag-topic">${q.topic}</span>
+                        </div>
+                    </div>
+                    <img src="${q.image || ''}" class="question-image ${q.image ? 'has-image' : ''}">
+                    <div class="question-content">${q.content}</div>
+                    <div class="question-meta">
+                        <span>❌ 错因：${q.wrongReason}</span>
+                        <span>📅 ${q.date}</span>
+                    </div>
+                    <div class="question-actions">
+                        <button class="btn btn-sm" onclick="showAnswer(${index})">查看答案</button>
+                        <button class="btn btn-sm btn-secondary" onclick="markMastered(${index})">✓ 已掌握</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteQuestion(${index})">🗑️ 删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 更新统计
+        function updateStats() {
+            document.getElementById('totalCount').textContent = questions.length;
+            document.getElementById('reviewCount').textContent = questions.filter(q => !q.mastered).length;
+            document.getElementById('masteredCount').textContent = questions.filter(q => q.mastered).length;
+            
+            const progress = questions.length > 0 
+                ? (questions.filter(q => q.mastered).length / questions.length * 100) 
+                : 0;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        // 添加错题
+        function addQuestion(e) {
+            e.preventDefault();
+            
+            const question = {
+                subject: document.getElementById('subject').value,
+                topic: document.getElementById('topic').value,
+                content: document.getElementById('content').value,
+                wrongReason: document.getElementById('wrongReason').value,
+                correctAnswer: document.getElementById('correctAnswer').value,
+                image: currentImage,
+                date: new Date().toLocaleDateString('zh-CN'),
+                mastered: false
+            };
+            
+            questions.unshift(question);
+            localStorage.setItem('cuoti_questions', JSON.stringify(questions));
+            
+            closeModal('addModal');
+            document.getElementById('addForm').reset();
+            currentImage = '';
+            document.getElementById('imagePreview').classList.remove('has-image');
+            
+            renderQuestions();
+            updateStats();
+        }
+        
+        // 图片预览
+        function previewImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = e.target.result;
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = currentImage;
+                    preview.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // 查看答案
+        function showAnswer(index) {
+            const q = questions[index];
+            alert('正确答案：\n\n' + q.correctAnswer);
+        }
+        
+        // 标记已掌握
+        function markMastered(index) {
+            questions[index].mastered = !questions[index].mastered;
+            localStorage.setItem('cuoti_questions', JSON.stringify(questions));
+            renderQuestions();
+            updateStats();
+        }
+        
+        // 删除错题
+        function deleteQuestion(index) {
+            if (confirm('确定要删除这道错题吗？')) {
+                questions.splice(index, 1);
+                localStorage.setItem('cuoti_questions', JSON.stringify(questions));
+                renderQuestions();
+                updateStats();
+            }
+        }
+        
+        // 筛选
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderQuestions();
+            });
+        });
+        
+        // 模态框
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        // 切换难度
+        function selectDifficulty(el) {
+            document.querySelectorAll('.paper-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedDifficulty = el.dataset.difficulty;
+        }
+        
+        // 组卷
+        function generatePaper() {
+            const subject = document.getElementById('paperSubject').value;
+            const count = parseInt(document.getElementById('paperCount').value);
+            
+            let filtered = questions;
+            if (subject !== 'all') {
+                filtered = filtered.filter(q => q.subject === subject);
+            }
+            
+            if (filtered.length === 0) {
+                alert('没有足够的题目来生成试卷！');
+                return;
+            }
+            
+            // 随机选题
+            const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+            
+            const paperContent = document.getElementById('paperContent');
+            paperContent.innerHTML = selected.map((q, i) => `
+                <div class="question-card" style="margin-bottom: 15px">
+                    <div class="tags" style="margin-bottom: 10px">
+                        <span class="tag tag-${q.subject}">${q.subject}</span>
+                        <span class="tag tag-topic">${q.topic}</span>
+                    </div>
+                    <div class="question-content">${i + 1}. ${q.content}</div>
+                    <div style="margin-top: 10px; color: var(--accent)">
+                        答案：${q.correctAnswer}
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('paperResult').style.display = 'block';
+        }
+        
+        // 打印试卷
+        function printPaper() {
+            window.print();
+        }
+        
+        // 切换标签页
+        function switchTab(tab) {
+            document.querySelectorAll('.dock-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (tab === 'questions') {
+                document.querySelectorAll('.dock-item')[1].classList.add('active');
+            } else if (tab === 'paper') {
+                openModal('paperModal');
+            }
+        }
+        
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
